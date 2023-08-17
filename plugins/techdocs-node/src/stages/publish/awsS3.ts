@@ -76,6 +76,11 @@ const streamToBuffer = (stream: Readable): Promise<Buffer> => {
   });
 };
 
+const normalizePrefix = (prefix: string): string => {
+  const components = prefix.split('/');
+  return `/${components.filter(part => part !== '').join('/')}`;
+};
+
 export class AwsS3Publish implements PublisherBase {
   private readonly storageClient: S3Client;
   private readonly bucketName: string;
@@ -389,6 +394,7 @@ export class AwsS3Publish implements PublisherBase {
 
   async fetchTechDocsMetadata(
     entityName: CompoundEntityRef,
+    prefix?: string,
   ): Promise<TechDocsMetadata> {
     try {
       return await new Promise<TechDocsMetadata>(async (resolve, reject) => {
@@ -398,12 +404,15 @@ export class AwsS3Publish implements PublisherBase {
           : lowerCaseEntityTriplet(entityTriplet);
 
         const entityRootDir = path.posix.join(this.bucketRootPath, entityDir);
+        const entityPath = `${entityRootDir}${
+          prefix ? normalizePrefix(prefix) : ''
+        }`;
 
         try {
           const resp = await this.storageClient.send(
             new GetObjectCommand({
               Bucket: this.bucketName,
-              Key: `${entityRootDir}/techdocs_metadata.json`,
+              Key: `${entityPath}/techdocs_metadata.json`,
             }),
           );
 
@@ -412,7 +421,7 @@ export class AwsS3Publish implements PublisherBase {
           );
           if (!techdocsMetadataJson) {
             throw new Error(
-              `Unable to parse the techdocs metadata file ${entityRootDir}/techdocs_metadata.json.`,
+              `Unable to parse the techdocs metadata file ${entityPath}/techdocs_metadata.json.`,
             );
           }
 

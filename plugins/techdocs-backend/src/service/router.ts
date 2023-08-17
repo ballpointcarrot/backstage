@@ -42,6 +42,15 @@ import * as winston from 'winston';
 import { PassThrough } from 'stream';
 
 /**
+ * Configuration for allowing Preview TechDocs to route via the backend.
+ *
+ * @public
+ */
+export type PreviewRoutingOptions = {
+  basePath: string;
+};
+
+/**
  * Required dependencies for running TechDocs in the "out-of-the-box"
  * deployment configuration (prepare/generate/publish all in the Backend).
  *
@@ -59,6 +68,7 @@ export type OutOfTheBoxDeploymentOptions = {
   docsBuildStrategy?: DocsBuildStrategy;
   buildLogTransport?: winston.transport;
   catalogClient?: CatalogClient;
+  preview?: PreviewRoutingOptions;
 };
 
 /**
@@ -76,6 +86,7 @@ export type RecommendedDeploymentOptions = {
   docsBuildStrategy?: DocsBuildStrategy;
   buildLogTransport?: winston.transport;
   catalogClient?: CatalogClient;
+  preview?: PreviewRoutingOptions;
 };
 
 /**
@@ -142,66 +153,28 @@ export async function createRouter(
     cache,
   });
 
+  if (options.preview) {
+    router.get(
+      `/metadata/techdocs/${options.preview.basePath}/:ref/:namespace/:kind/:name`,
+      async (req, res) => {
+        await techdocsMetadata(req, res);
+      },
+    );
+
+    router.get(
+      `/metadata/entity/${options.preview.basePath}/:ref/:namespace/:kind/:name`,
+      async (req, res) => {
+        await entityMetadata(req, res);
+      },
+    );
+  }
+
   router.get('/metadata/techdocs/:namespace/:kind/:name', async (req, res) => {
-    const { kind, namespace, name } = req.params;
-    const entityName = { kind, namespace, name };
-    const token = getBearerToken(req.headers.authorization);
-
-    // Verify that the related entity exists and the current user has permission to view it.
-    const entity = await entityLoader.load(entityName, token);
-
-    if (!entity) {
-      throw new NotFoundError(
-        `Unable to get metadata for '${stringifyEntityRef(entityName)}'`,
-      );
-    }
-
-    try {
-      const techdocsMetadata = await publisher.fetchTechDocsMetadata(
-        entityName,
-      );
-
-      res.json(techdocsMetadata);
-    } catch (err) {
-      logger.info(
-        `Unable to get metadata for '${stringifyEntityRef(
-          entityName,
-        )}' with error ${err}`,
-      );
-      throw new NotFoundError(
-        `Unable to get metadata for '${stringifyEntityRef(entityName)}'`,
-        err,
-      );
-    }
+    await techdocsMetadata(req, res);
   });
 
   router.get('/metadata/entity/:namespace/:kind/:name', async (req, res) => {
-    const { kind, namespace, name } = req.params;
-    const entityName = { kind, namespace, name };
-    const token = getBearerToken(req.headers.authorization);
-
-    const entity = await entityLoader.load(entityName, token);
-
-    if (!entity) {
-      throw new NotFoundError(
-        `Unable to get metadata for '${stringifyEntityRef(entityName)}'`,
-      );
-    }
-
-    try {
-      const locationMetadata = getLocationForEntity(entity, scmIntegrations);
-      res.json({ ...entity, locationMetadata });
-    } catch (err) {
-      logger.info(
-        `Unable to get metadata for '${stringifyEntityRef(
-          entityName,
-        )}' with error ${err}`,
-      );
-      throw new NotFoundError(
-        `Unable to get metadata for '${stringifyEntityRef(entityName)}'`,
-        err,
-      );
-    }
+    await entityMetadata(req, res);
   });
 
   // Check if docs are the latest version and trigger rebuilds if not
@@ -293,6 +266,69 @@ export async function createRouter(
   router.use('/static/docs', publisher.docsRouter());
 
   return router;
+
+  async function techdocsMetadata(req: express.Request, res: express.Response) {
+    const { kind, namespace, name } = req.params; // TODO: Add "ref" to params here
+    const entityName = { kind, namespace, name };
+    const token = getBearerToken(req.headers.authorization);
+
+    // Verify that the related entity exists and the current user has permission to view it.
+    const entity = await entityLoader.load(entityName, token);
+
+    if (!entity) {
+      throw new NotFoundError(
+        `Unable to get metadata for '${stringifyEntityRef(entityName)}'`,
+      );
+    }
+
+    try {
+      // TODO: update to allow ref to pass through for request
+      const publishedTechdocsMetadata = await publisher.fetchTechDocsMetadata(
+        entityName,
+      );
+
+      res.json(publishedTechdocsMetadata);
+    } catch (err) {
+      logger.info(
+        `Unable to get metadata for '${stringifyEntityRef(
+          entityName,
+        )}' with error ${err}`,
+      );
+      throw new NotFoundError(
+        `Unable to get metadata for '${stringifyEntityRef(entityName)}'`,
+        err,
+      );
+    }
+  }
+
+  async function entityMetadata(req: express.Request, res: express.Response) {
+    const { kind, namespace, name } = req.params;
+    const entityName = { kind, namespace, name };
+    const token = getBearerToken(req.headers.authorization);
+
+    const entity = await entityLoader.load(entityName, token);
+
+    if (!entity) {
+      throw new NotFoundError(
+        `Unable to get metadata for '${stringifyEntityRef(entityName)}'`,
+      );
+    }
+
+    try {
+      const locationMetadata = getLocationForEntity(entity, scmIntegrations);
+      res.json({ ...entity, locationMetadata });
+    } catch (err) {
+      logger.info(
+        `Unable to get metadata for '${stringifyEntityRef(
+          entityName,
+        )}' with error ${err}`,
+      );
+      throw new NotFoundError(
+        `Unable to get metadata for '${stringifyEntityRef(entityName)}'`,
+        err,
+      );
+    }
+  }
 }
 
 function getBearerToken(header?: string): string | undefined {

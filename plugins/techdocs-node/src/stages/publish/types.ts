@@ -135,6 +135,7 @@ export interface PublisherBase {
    */
   fetchTechDocsMetadata(
     entityName: CompoundEntityRef,
+    prefix?: string,
   ): Promise<TechDocsMetadata>;
 
   /**

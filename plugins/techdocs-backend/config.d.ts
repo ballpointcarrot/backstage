@@ -274,6 +274,15 @@ export interface Config {
       readTimeout?: number;
     };
 
+    preview?: {
+      /**
+       * The path within the API to serve preview TechDocs requests on.
+       * If unset, the preview feature is not enabled, and no preview docs will
+       * be served.
+       */
+      basePath: string;
+    };
+
     /**
      * (Optional and not recommended) Prior to version [0.x.y] of TechDocs, docs
      * sites could only be accessed over paths with case-sensitive entity triplets

@@ -163,16 +163,27 @@ export class LocalPublish implements PublisherBase {
 
   async fetchTechDocsMetadata(
     entityName: CompoundEntityRef,
+    prefix?: string,
   ): Promise<TechDocsMetadata> {
     let metadataPath: string;
 
     try {
-      metadataPath = this.staticEntityPathJoin(
-        entityName.namespace,
-        entityName.kind,
-        entityName.name,
-        'techdocs_metadata.json',
-      );
+      if (prefix) {
+        metadataPath = this.staticEntityPathJoin(
+          prefix,
+          entityName.namespace,
+          entityName.kind,
+          entityName.name,
+          'techdocs_metadata.json',
+        );
+      } else {
+        metadataPath = this.staticEntityPathJoin(
+          entityName.namespace,
+          entityName.kind,
+          entityName.name,
+          'techdocs_metadata.json',
+        );
+      }
     } catch (err) {
       throw new ForwardedError(
         `Unexpected entity when fetching metadata: ${stringifyEntityRef(

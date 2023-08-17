@@ -30,11 +30,16 @@ import express, { Response } from 'express';
 import request from 'supertest';
 import { DocsSynchronizer, DocsSynchronizerSyncOpts } from './DocsSynchronizer';
 import { CachedEntityLoader } from './CachedEntityLoader';
-import { createEventStream, createRouter, RouterOptions } from './router';
+import {
+  createEventStream,
+  createRouter,
+  PreviewRoutingOptions,
+  RouterOptions,
+} from './router';
 import { TechDocsCache } from '../cache';
 import { DocsBuildStrategy } from './DocsBuildStrategy';
+import { CatalogClient } from '@backstage/catalog-client';
 
-jest.mock('@backstage/catalog-client');
 jest.mock('@backstage/config');
 jest.mock('./CachedEntityLoader');
 jest.mock('./DocsSynchronizer');
@@ -121,6 +126,14 @@ describe('createRouter', () => {
   const docsBuildStrategy: jest.Mocked<DocsBuildStrategy> = {
     shouldBuild: jest.fn(),
   };
+  const catalogClient: jest.Mocked<CatalogClient> = {
+    getEntityByRef: jest.fn(),
+  } as unknown as jest.Mocked<CatalogClient>;
+
+  const preview: PreviewRoutingOptions = {
+    basePath: 'preview',
+  };
+
   const outOfTheBoxOptions = {
     preparers,
     generators,
@@ -129,7 +142,9 @@ describe('createRouter', () => {
     logger: getVoidLogger(),
     discovery,
     cache,
+    catalogClient,
     docsBuildStrategy,
+    preview,
   };
   const recommendedOptions = {
     publisher,
@@ -137,7 +152,9 @@ describe('createRouter', () => {
     logger: getVoidLogger(),
     discovery,
     cache,
+    catalogClient,
     docsBuildStrategy,
+    preview,
   };
 
   beforeEach(() => {
@@ -154,6 +171,64 @@ describe('createRouter', () => {
     );
     MockTechDocsCache.get.mockResolvedValue(undefined);
     MockTechDocsCache.set.mockResolvedValue();
+  });
+
+  describe('preview routes', () => {
+    describe(`GET /metadata/techdocs/${preview.basePath}/:ref/:namespace/:kind/:name`, () => {
+      it('fetches the entity data from the loader', async () => {
+        const loaderSpy = jest.spyOn(MockCachedEntityLoader.prototype, 'load');
+        const app = await createApp(outOfTheBoxOptions);
+        const response = await request(app)
+          .get(
+            `/metadata/techdocs/${preview.basePath}/123423434234234234/default/component/name`,
+          )
+          .send();
+
+        expect(response.status).toBe(404);
+        expect(loaderSpy).toHaveBeenCalledWith(
+          {
+            kind: 'component',
+            name: 'name',
+            namespace: 'default',
+          },
+          undefined,
+        );
+      });
+    });
+    describe(`GET /metadata/entity/${preview.basePath}/:ref/:namespace/:kind/:name`, () => {
+      it('successfully grabs the entity data', async () => {
+        const loaderSpy = jest.spyOn(MockCachedEntityLoader.prototype, 'load');
+        loaderSpy.mockResolvedValueOnce({
+          apiVersion: 'fake',
+          kind: 'Component',
+          metadata: {
+            name: 'fake',
+            annotations: { 'backstage.io/techdocs-ref': 'url:fake' },
+          },
+        });
+        const app = await createApp(outOfTheBoxOptions);
+        const response = await request(app)
+          .get(
+            `/metadata/entity/${preview.basePath}/123423434234234234/default/component/name`,
+          )
+          .send();
+
+        expect(response.status).toBe(200);
+        expect(loaderSpy).toHaveBeenCalledWith(
+          {
+            kind: 'component',
+            name: 'name',
+            namespace: 'default',
+          },
+          undefined,
+        );
+        expect(response.body).toEqual(
+          expect.objectContaining({
+            locationMetadata: { target: 'fake', type: 'url' },
+          }),
+        );
+      });
+    });
   });
 
   describe('GET /sync/:namespace/:kind/:name', () => {
