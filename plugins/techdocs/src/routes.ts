@@ -20,6 +20,11 @@ export const rootRouteRef = createRouteRef({
   id: 'techdocs:index-page',
 });
 
+export const previewDocsRouteRef = createRouteRef({
+  id: 'techdocs:preview-reader-page',
+  params: ['previewpath', 'ref', 'namespace', 'kind', 'name'],
+});
+
 export const rootDocsRouteRef = createRouteRef({
   id: 'techdocs:reader-page',
   params: ['namespace', 'kind', 'name'],

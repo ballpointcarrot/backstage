@@ -30,7 +30,7 @@ import { TechDocsReaderPageRenderFunction } from '../../../types';
 import { TechDocsReaderPageContent } from '../TechDocsReaderPageContent';
 import { TechDocsReaderPageHeader } from '../TechDocsReaderPageHeader';
 import { TechDocsReaderPageSubheader } from '../TechDocsReaderPageSubheader';
-import { rootDocsRouteRef } from '../../../routes';
+import { previewDocsRouteRef, rootDocsRouteRef } from '../../../routes';
 import {
   getComponentData,
   useRouteRefParams,
@@ -157,7 +157,21 @@ export type TechDocsReaderPageProps = {
  * @public
  */
 export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
-  const { kind, name, namespace } = useRouteRefParams(rootDocsRouteRef);
+  const params = useRouteRefParams(previewDocsRouteRef);
+  const { previewpath, ref } = params;
+  let { kind, namespace, name } = params;
+  let previewMetadata = {};
+
+  // If the name is missing, then we're only dealing with three route components;
+  // use the standard page mapping.
+  if (name === '' || name === undefined) {
+    kind = ref;
+    name = namespace;
+    namespace = previewpath;
+  } else {
+    previewMetadata = { previewpath, ref };
+  }
+
   const { children, entityRef = { kind, name, namespace } } = props;
 
   const outlet = useOutlet();
@@ -177,7 +191,9 @@ export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
 
     // As explained above, "page" is configuration 4 and <TechDocsReaderLayout> is 1
     return (
-      <TechDocsReaderPageProvider entityRef={entityRef}>
+      <TechDocsReaderPageProvider
+        entityRef={{ ...entityRef, ...previewMetadata }}
+      >
         {(page as JSX.Element) || <TechDocsReaderLayout />}
       </TechDocsReaderPageProvider>
     );
@@ -185,7 +201,9 @@ export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
 
   // As explained above, a render function is configuration 3 and React element is 2
   return (
-    <TechDocsReaderPageProvider entityRef={entityRef}>
+    <TechDocsReaderPageProvider
+      entityRef={{ ...entityRef, ...previewMetadata }}
+    >
       {({ metadata, entityMetadata, onReady }) => (
         <div className="techdocs-reader-page">
           <Page themeId="documentation">

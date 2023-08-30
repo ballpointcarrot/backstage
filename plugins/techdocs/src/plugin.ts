@@ -21,6 +21,7 @@ import {
 import { TechDocsClient, TechDocsStorageClient } from './client';
 import {
   rootDocsRouteRef,
+  previewDocsRouteRef,
   rootRouteRef,
   rootCatalogDocsRouteRef,
 } from './routes';
@@ -80,6 +81,7 @@ export const techdocsPlugin = createPlugin({
   ],
   routes: {
     root: rootRouteRef,
+    preview: previewDocsRouteRef,
     docRoot: rootDocsRouteRef,
     entityContent: rootCatalogDocsRouteRef,
   },
@@ -97,7 +99,6 @@ export const TechdocsPage = techdocsPlugin.provide(
     mountPoint: rootRouteRef,
   }),
 );
-
 /**
  * Routable extension used to render docs on Entity page
  *
@@ -155,7 +156,7 @@ export const TechDocsReaderPage = techdocsPlugin.provide(
       import('./reader/components/TechDocsReaderPage').then(
         m => m.TechDocsReaderPage,
       ),
-    mountPoint: rootDocsRouteRef,
+    mountPoint: previewDocsRouteRef,
   }),
 );
 
