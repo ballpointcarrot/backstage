@@ -130,10 +130,6 @@ describe('createRouter', () => {
     getEntityByRef: jest.fn(),
   } as unknown as jest.Mocked<CatalogClient>;
 
-  const preview: PreviewRoutingOptions = {
-    basePath: 'preview',
-  };
-
   const outOfTheBoxOptions = {
     preparers,
     generators,
@@ -144,7 +140,6 @@ describe('createRouter', () => {
     cache,
     catalogClient,
     docsBuildStrategy,
-    preview,
   };
   const recommendedOptions = {
     publisher,
@@ -154,13 +149,13 @@ describe('createRouter', () => {
     cache,
     catalogClient,
     docsBuildStrategy,
-    preview,
   };
 
   beforeEach(() => {
     jest.resetAllMocks();
   });
 
+  const basePath = 'preview';
   beforeEach(async () => {
     publisher.docsRouter.mockReturnValue(() => {});
     discovery.getBaseUrl.mockImplementation(async type => {
@@ -169,18 +164,21 @@ describe('createRouter', () => {
     MockedConfigReader.prototype.getOptionalNumber.mockImplementation(key =>
       key === 'techdocs.cache.ttl' ? 1 : undefined,
     );
+    MockedConfigReader.prototype.getOptionalString.mockImplementation(key =>
+      key === 'techdocs.preview.basePath' ? basePath : undefined,
+    );
     MockTechDocsCache.get.mockResolvedValue(undefined);
     MockTechDocsCache.set.mockResolvedValue();
   });
 
   describe('preview routes', () => {
-    describe(`GET /metadata/techdocs/${preview.basePath}/:ref/:namespace/:kind/:name`, () => {
+    describe(`GET /metadata/techdocs/${basePath}/:ref/:namespace/:kind/:name`, () => {
       it('fetches the entity data from the loader', async () => {
         const loaderSpy = jest.spyOn(MockCachedEntityLoader.prototype, 'load');
         const app = await createApp(outOfTheBoxOptions);
         const response = await request(app)
           .get(
-            `/metadata/techdocs/${preview.basePath}/123423434234234234/default/component/name`,
+            `/metadata/techdocs/${basePath}/123423434234234234/default/component/name`,
           )
           .send();
 
@@ -195,7 +193,7 @@ describe('createRouter', () => {
         );
       });
     });
-    describe(`GET /metadata/entity/${preview.basePath}/:ref/:namespace/:kind/:name`, () => {
+    describe(`GET /metadata/entity/${basePath}/:ref/:namespace/:kind/:name`, () => {
       it('successfully grabs the entity data', async () => {
         const loaderSpy = jest.spyOn(MockCachedEntityLoader.prototype, 'load');
         loaderSpy.mockResolvedValueOnce({
@@ -209,7 +207,7 @@ describe('createRouter', () => {
         const app = await createApp(outOfTheBoxOptions);
         const response = await request(app)
           .get(
-            `/metadata/entity/${preview.basePath}/123423434234234234/default/component/name`,
+            `/metadata/entity/${basePath}/123423434234234234/default/component/name`,
           )
           .send();
 

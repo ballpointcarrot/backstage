@@ -68,7 +68,6 @@ export type OutOfTheBoxDeploymentOptions = {
   docsBuildStrategy?: DocsBuildStrategy;
   buildLogTransport?: winston.transport;
   catalogClient?: CatalogClient;
-  preview?: PreviewRoutingOptions;
 };
 
 /**
@@ -86,7 +85,6 @@ export type RecommendedDeploymentOptions = {
   docsBuildStrategy?: DocsBuildStrategy;
   buildLogTransport?: winston.transport;
   catalogClient?: CatalogClient;
-  preview?: PreviewRoutingOptions;
 };
 
 /**
@@ -153,16 +151,17 @@ export async function createRouter(
     cache,
   });
 
-  if (options.preview) {
+  const previewPath = config.getOptionalString('techdocs.preview.basePath');
+  if (previewPath) {
     router.get(
-      `/metadata/techdocs/${options.preview.basePath}/:ref/:namespace/:kind/:name`,
+      `/metadata/techdocs/${previewPath}/:ref/:namespace/:kind/:name`,
       async (req, res) => {
         await techdocsMetadata(req, res);
       },
     );
 
     router.get(
-      `/metadata/entity/${options.preview.basePath}/:ref/:namespace/:kind/:name`,
+      `/metadata/entity/${previewPath}/:ref/:namespace/:kind/:name`,
       async (req, res) => {
         await entityMetadata(req, res);
       },

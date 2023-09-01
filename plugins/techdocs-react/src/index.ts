@@ -30,6 +30,7 @@ export {
 export { techdocsApiRef, techdocsStorageApiRef } from './api';
 export type { SyncResult, TechDocsApi, TechDocsStorageApi } from './api';
 export { TechDocsReaderPageProvider, useTechDocsReaderPage } from './context';
+export type { PreviewMetadata } from './context';
 export type {
   TechDocsReaderPageProviderProps,
   TechDocsReaderPageProviderRenderFunction,
