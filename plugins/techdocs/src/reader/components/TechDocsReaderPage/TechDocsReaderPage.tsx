@@ -23,6 +23,7 @@ import {
   TECHDOCS_ADDONS_WRAPPER_KEY,
   TECHDOCS_ADDONS_KEY,
   TechDocsReaderPageProvider,
+  PreviewMetadata,
 } from '@backstage/plugin-techdocs-react';
 
 import { TechDocsReaderPageRenderFunction } from '../../../types';
@@ -30,7 +31,7 @@ import { TechDocsReaderPageRenderFunction } from '../../../types';
 import { TechDocsReaderPageContent } from '../TechDocsReaderPageContent';
 import { TechDocsReaderPageHeader } from '../TechDocsReaderPageHeader';
 import { TechDocsReaderPageSubheader } from '../TechDocsReaderPageSubheader';
-import { previewDocsRouteRef, rootDocsRouteRef } from '../../../routes';
+import { previewDocsRouteRef } from '../../../routes';
 import {
   getComponentData,
   useRouteRefParams,
@@ -147,7 +148,7 @@ export const TechDocsReaderLayout = (props: TechDocsReaderLayoutProps) => {
  * @public
  */
 export type TechDocsReaderPageProps = {
-  entityRef?: CompoundEntityRef;
+  entityRef?: CompoundEntityRef | (CompoundEntityRef & PreviewMetadata);
   children?: TechDocsReaderPageRenderFunction | ReactNode;
 };
 
@@ -157,22 +158,23 @@ export type TechDocsReaderPageProps = {
  * @public
  */
 export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
+  const { children } = props;
+
   const params = useRouteRefParams(previewDocsRouteRef);
-  const { previewpath, ref } = params;
-  let { kind, namespace, name } = params;
-  let previewMetadata = {};
 
-  // If the name is missing, then we're only dealing with three route components;
-  // use the standard page mapping.
-  if (name === '' || name === undefined) {
-    kind = ref;
-    name = namespace;
-    namespace = previewpath;
+  let entityRef: CompoundEntityRef | (CompoundEntityRef & PreviewMetadata);
+  if (props.entityRef) {
+    entityRef = props.entityRef;
   } else {
-    previewMetadata = { previewpath, ref };
-  }
+    const { previewpath, ref, kind, namespace, name } = params;
 
-  const { children, entityRef = { kind, name, namespace } } = props;
+    entityRef = {
+      kind,
+      name,
+      namespace,
+      ...{ previewpath, ref },
+    };
+  }
 
   const outlet = useOutlet();
 
@@ -191,9 +193,7 @@ export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
 
     // As explained above, "page" is configuration 4 and <TechDocsReaderLayout> is 1
     return (
-      <TechDocsReaderPageProvider
-        entityRef={{ ...entityRef, ...previewMetadata }}
-      >
+      <TechDocsReaderPageProvider entityRef={{ ...entityRef }}>
         {(page as JSX.Element) || <TechDocsReaderLayout />}
       </TechDocsReaderPageProvider>
     );
@@ -201,9 +201,7 @@ export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
 
   // As explained above, a render function is configuration 3 and React element is 2
   return (
-    <TechDocsReaderPageProvider
-      entityRef={{ ...entityRef, ...previewMetadata }}
-    >
+    <TechDocsReaderPageProvider entityRef={{ ...entityRef }}>
       {({ metadata, entityMetadata, onReady }) => (
         <div className="techdocs-reader-page">
           <Page themeId="documentation">

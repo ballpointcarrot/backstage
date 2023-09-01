@@ -45,10 +45,6 @@ export const Router = () => {
     <Routes>
       <Route path="/" element={<TechDocsIndexPage />} />
       <Route
-        path="/:previewpath/:ref/:namespace/:kind/:name/*"
-        element={<TechDocsReaderPage />}
-      />
-      <Route
         path="/:namespace/:kind/:name/*"
         element={<TechDocsReaderPage />}
       />

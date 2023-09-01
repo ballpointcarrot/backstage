@@ -26,7 +26,11 @@ import {
 
 import { techdocsApiRef, techdocsStorageApiRef } from '../../../api';
 
-import { rootRouteRef, rootDocsRouteRef } from '../../../routes';
+import {
+  rootRouteRef,
+  rootDocsRouteRef,
+  previewDocsRouteRef,
+} from '../../../routes';
 
 import { TechDocsReaderPage } from './TechDocsReaderPage';
 import { Route, useParams } from 'react-router-dom';
@@ -89,6 +93,11 @@ const configApi = new MockConfigApi({
   app: {
     baseUrl: 'http://localhost:3000',
   },
+  techdocs: {
+    preview: {
+      basePath: 'unittestpreview',
+    },
+  },
 });
 
 const Wrapper = ({ children }: { children: React.ReactNode }) => {
@@ -110,6 +119,7 @@ const mountedRoutes = {
   '/catalog/:namespace/:kind/:name/*': entityRouteRef,
   '/docs': rootRouteRef,
   '/docs/:namespace/:kind/:name/*': rootDocsRouteRef,
+  '/docs/:basepath/:ref/:namespace/:kind/:name/*': previewDocsRouteRef,
 };
 
 describe('<TechDocsReaderPage />', () => {
@@ -127,30 +137,8 @@ describe('<TechDocsReaderPage />', () => {
     (Page as jest.Mock).mockImplementation(realPage);
   });
 
-  it('should render a techdocs reader page without children', async () => {
-    const rendered = await renderInTestApp(
-      <Wrapper>
-        <TechDocsReaderPage
-          entityRef={{
-            name: 'test-name',
-            namespace: 'test-namespace',
-            kind: 'test',
-          }}
-        />
-      </Wrapper>,
-      {
-        mountedRoutes,
-      },
-    );
-
-    // TechDocsReaderPageHeader
-    expect(rendered.container.querySelector('header')).toBeInTheDocument();
-    // TechDocsReaderPageContent
-    expect(rendered.container.querySelector('article')).toBeInTheDocument();
-  });
-
-  it('should render a techdocs reader page with children', async () => {
-    await act(async () => {
+  describe('with a normal entity path', () => {
+    it('should render a techdocs reader page without children', async () => {
       const rendered = await renderInTestApp(
         <Wrapper>
           <TechDocsReaderPage
@@ -159,80 +147,291 @@ describe('<TechDocsReaderPage />', () => {
               namespace: 'test-namespace',
               kind: 'test',
             }}
-          >
-            techdocs reader page
-          </TechDocsReaderPage>
+          />
         </Wrapper>,
         {
           mountedRoutes,
         },
       );
-      expect(
-        rendered.container.querySelector('header'),
-      ).not.toBeInTheDocument();
-      expect(
-        rendered.container.querySelector('article'),
-      ).not.toBeInTheDocument();
-      expect(rendered.getByText('techdocs reader page')).toBeInTheDocument();
+
+      // TechDocsReaderPageHeader
+      expect(rendered.container.querySelector('header')).toBeInTheDocument();
+      // TechDocsReaderPageContent
+      expect(rendered.container.querySelector('article')).toBeInTheDocument();
+    });
+
+    it('should render a techdocs reader page with children', async () => {
+      await act(async () => {
+        const rendered = await renderInTestApp(
+          <Wrapper>
+            <TechDocsReaderPage
+              entityRef={{
+                name: 'test-name',
+                namespace: 'test-namespace',
+                kind: 'test',
+              }}
+            >
+              techdocs reader page
+            </TechDocsReaderPage>
+          </Wrapper>,
+          {
+            mountedRoutes,
+          },
+        );
+        expect(
+          rendered.container.querySelector('header'),
+        ).not.toBeInTheDocument();
+        expect(
+          rendered.container.querySelector('article'),
+        ).not.toBeInTheDocument();
+        expect(rendered.getByText('techdocs reader page')).toBeInTheDocument();
+      });
+    });
+
+    it('should render techdocs reader page with addons', async () => {
+      (Page as jest.Mock).mockImplementation(PageMock);
+      const name = 'test-name';
+      const namespace = 'test-namespace';
+      const kind = 'test';
+
+      await act(async () => {
+        const rendered = await renderInTestApp(
+          <Wrapper>
+            <FlatRoutes>
+              <Route
+                path="/docs/:namespace/:kind/:name/*"
+                element={<TechDocsReaderPage />}
+              >
+                <TechDocsAddons>
+                  <ReportIssue />
+                </TechDocsAddons>
+              </Route>
+            </FlatRoutes>
+          </Wrapper>,
+          {
+            mountedRoutes,
+            routeEntries: ['/docs/test-namespace/test/test-name'],
+          },
+        );
+
+        expect(
+          rendered.getByText(`PageMock: ${namespace}#${kind}#${name}`),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('should render techdocs reader page with addons and page', async () => {
+      (Page as jest.Mock).mockImplementation(PageMock);
+      await act(async () => {
+        const rendered = await renderInTestApp(
+          <Wrapper>
+            <FlatRoutes>
+              <Route
+                path="/docs/:namespace/:kind/:name/*"
+                element={<TechDocsReaderPage />}
+              >
+                <p>the page</p>
+                <TechDocsAddons>
+                  <ReportIssue />
+                </TechDocsAddons>
+              </Route>
+            </FlatRoutes>
+          </Wrapper>,
+          {
+            mountedRoutes,
+            routeEntries: ['/docs/test-namespace/test/test-name'],
+          },
+        );
+
+        expect(rendered.getByText('the page')).toBeInTheDocument();
+      });
+    });
+
+    it('should render techdocs reader page with additional subroutes correctly', async () => {
+      (Page as jest.Mock).mockImplementation(PageMock);
+      const name = 'test-name';
+      const namespace = 'test-namespace';
+      const kind = 'test';
+
+      await act(async () => {
+        const rendered = await renderInTestApp(
+          <Wrapper>
+            <FlatRoutes>
+              <Route
+                path="/docs/:namespace/:kind/:name/*"
+                element={<TechDocsReaderPage />}
+              >
+                <TechDocsAddons>
+                  <ReportIssue />
+                </TechDocsAddons>
+              </Route>
+            </FlatRoutes>
+          </Wrapper>,
+          {
+            mountedRoutes,
+            routeEntries: [
+              '/docs/test-namespace/test/test-name/subpath/anotherpath/thedocument',
+            ],
+          },
+        );
+
+        expect(
+          rendered.getByText(`PageMock: ${namespace}#${kind}#${name}`),
+        ).toBeInTheDocument();
+      });
     });
   });
 
-  it('should render techdocs reader page with addons', async () => {
-    (Page as jest.Mock).mockImplementation(PageMock);
-    const name = 'test-name';
-    const namespace = 'test-namespace';
-    const kind = 'test';
-
-    await act(async () => {
+  describe('with a preview path', () => {
+    it('should render a techdocs reader page without children', async () => {
       const rendered = await renderInTestApp(
         <Wrapper>
-          <FlatRoutes>
-            <Route
-              path="/docs/:namespace/:kind/:name/*"
-              element={<TechDocsReaderPage />}
-            >
-              <TechDocsAddons>
-                <ReportIssue />
-              </TechDocsAddons>
-            </Route>
-          </FlatRoutes>
+          <TechDocsReaderPage
+            entityRef={{
+              name: 'test-name',
+              namespace: 'test-namespace',
+              kind: 'test',
+              previewpath: 'preview',
+              ref: 'aoeuaoeu',
+            }}
+          />
         </Wrapper>,
         {
           mountedRoutes,
-          routeEntries: ['/docs/test-namespace/test/test-name'],
         },
       );
 
-      expect(
-        rendered.getByText(`PageMock: ${namespace}#${kind}#${name}`),
-      ).toBeInTheDocument();
+      // TechDocsReaderPageHeader
+      expect(rendered.container.querySelector('header')).toBeInTheDocument();
+      // TechDocsReaderPageContent
+      expect(rendered.container.querySelector('article')).toBeInTheDocument();
     });
-  });
 
-  it('should render techdocs reader page with addons and page', async () => {
-    (Page as jest.Mock).mockImplementation(PageMock);
-    await act(async () => {
-      const rendered = await renderInTestApp(
-        <Wrapper>
-          <FlatRoutes>
-            <Route
-              path="/docs/:namespace/:kind/:name/*"
-              element={<TechDocsReaderPage />}
+    it('should render a techdocs reader page with children', async () => {
+      await act(async () => {
+        const rendered = await renderInTestApp(
+          <Wrapper>
+            <TechDocsReaderPage
+              entityRef={{
+                name: 'test-name',
+                namespace: 'test-namespace',
+                kind: 'test',
+                previewpath: 'preview',
+                ref: 'aoeuaoeu',
+              }}
             >
-              <p>the page</p>
-              <TechDocsAddons>
-                <ReportIssue />
-              </TechDocsAddons>
-            </Route>
-          </FlatRoutes>
-        </Wrapper>,
-        {
-          mountedRoutes,
-          routeEntries: ['/docs/test-namespace/test/test-name'],
-        },
-      );
+              techdocs reader page
+            </TechDocsReaderPage>
+          </Wrapper>,
+          {
+            mountedRoutes,
+          },
+        );
+        expect(
+          rendered.container.querySelector('header'),
+        ).not.toBeInTheDocument();
+        expect(
+          rendered.container.querySelector('article'),
+        ).not.toBeInTheDocument();
+        expect(rendered.getByText('techdocs reader page')).toBeInTheDocument();
+      });
+    });
 
-      expect(rendered.getByText('the page')).toBeInTheDocument();
+    it('should render techdocs reader page with addons', async () => {
+      (Page as jest.Mock).mockImplementation(PageMock);
+      const name = 'test-name';
+      const namespace = 'test-namespace';
+      const kind = 'test';
+
+      await act(async () => {
+        const rendered = await renderInTestApp(
+          <Wrapper>
+            <FlatRoutes>
+              <Route
+                path="/docs/:previewpath/:ref/:namespace/:kind/:name/*"
+                element={<TechDocsReaderPage />}
+              >
+                <TechDocsAddons>
+                  <ReportIssue />
+                </TechDocsAddons>
+              </Route>
+            </FlatRoutes>
+          </Wrapper>,
+          {
+            mountedRoutes,
+            routeEntries: [
+              '/docs/preview/aoeuaoeu/test-namespace/test/test-name',
+            ],
+          },
+        );
+
+        expect(
+          rendered.getByText(`PageMock: ${namespace}#${kind}#${name}`),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('should render techdocs reader page with addons and page', async () => {
+      (Page as jest.Mock).mockImplementation(PageMock);
+      await act(async () => {
+        const rendered = await renderInTestApp(
+          <Wrapper>
+            <FlatRoutes>
+              <Route
+                path="/docs/:previewpath/:ref/:namespace/:kind/:name/*"
+                element={<TechDocsReaderPage />}
+              >
+                <p>the page</p>
+                <TechDocsAddons>
+                  <ReportIssue />
+                </TechDocsAddons>
+              </Route>
+            </FlatRoutes>
+          </Wrapper>,
+          {
+            mountedRoutes,
+            routeEntries: [
+              '/docs/preview/aoeuaoeu/test-namespace/test/test-name',
+            ],
+          },
+        );
+
+        expect(rendered.getByText('the page')).toBeInTheDocument();
+      });
+    });
+
+    it('should render techdocs reader page with additional subroutes correctly', async () => {
+      (Page as jest.Mock).mockImplementation(PageMock);
+      const name = 'test-name';
+      const namespace = 'test-namespace';
+      const kind = 'test';
+
+      await act(async () => {
+        const rendered = await renderInTestApp(
+          <Wrapper>
+            <FlatRoutes>
+              <Route
+                path="/docs/:previewpath/:ref/:namespace/:kind/:name/*"
+                element={<TechDocsReaderPage />}
+              >
+                <TechDocsAddons>
+                  <ReportIssue />
+                </TechDocsAddons>
+              </Route>
+            </FlatRoutes>
+          </Wrapper>,
+          {
+            mountedRoutes,
+            routeEntries: [
+              '/docs/preview/aoeuaoeu/test-namespace/test/test-name/subpath/anotherpath/thedocument',
+            ],
+          },
+        );
+
+        expect(
+          rendered.getByText(`PageMock: ${namespace}#${kind}#${name}`),
+        ).toBeInTheDocument();
+      });
     });
   });
 });

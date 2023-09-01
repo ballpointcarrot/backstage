@@ -156,10 +156,25 @@ export const TechDocsReaderPage = techdocsPlugin.provide(
       import('./reader/components/TechDocsReaderPage').then(
         m => m.TechDocsReaderPage,
       ),
-    mountPoint: previewDocsRouteRef,
+    mountPoint: rootDocsRouteRef,
   }),
 );
 
+/**
+ * Component responsible for composing a TechDocs preview reader page
+ *
+ * @public
+ */
+export const TechDocsPreviewPage = techdocsPlugin.provide(
+  createRoutableExtension({
+    name: 'TechDocsPreviewPage',
+    component: () =>
+      import('./reader/components/TechDocsReaderPage').then(
+        m => m.TechDocsReaderPage,
+      ),
+    mountPoint: previewDocsRouteRef,
+  }),
+);
 /**
  * React extension used to render results on Search page or modal
  *
