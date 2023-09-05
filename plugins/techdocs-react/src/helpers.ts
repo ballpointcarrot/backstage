@@ -35,3 +35,13 @@ export function toLowercaseEntityRefMaybe(
 
   return entityRef;
 }
+
+/**
+ * Retrieves the configured path for the preview feature from the configuration.
+ * @return a string containing the value of the preview path, or undefined if not set.
+ *
+ * @public
+ */
+export function getPreviewPath(config: Config): String | undefined {
+  return config.getOptionalString('techdocs.preview.basePath');
+}

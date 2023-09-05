@@ -53,4 +53,4 @@ export {
   useShadowRootElements,
   useShadowRootSelection,
 } from './hooks';
-export { toLowercaseEntityRefMaybe } from './helpers';
+export { toLowercaseEntityRefMaybe, getPreviewPath } from './helpers';
