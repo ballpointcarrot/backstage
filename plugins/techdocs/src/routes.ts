@@ -22,7 +22,7 @@ export const rootRouteRef = createRouteRef({
 
 export const previewDocsRouteRef = createRouteRef({
   id: 'techdocs:preview-reader-page',
-  params: ['previewpath', 'ref', 'namespace', 'kind', 'name'],
+  params: ['ref', 'namespace', 'kind', 'name'],
 });
 
 export const rootDocsRouteRef = createRouteRef({

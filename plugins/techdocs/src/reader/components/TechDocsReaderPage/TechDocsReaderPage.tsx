@@ -165,14 +165,23 @@ export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
   if (props.entityRef) {
     entityRef = props.entityRef;
   } else {
-    const { previewpath, ref, kind, namespace, name } = params;
+    const { ref, kind, namespace, name } = params;
+    const previewMetadata = { previewpath: 'preview', ref };
 
-    entityRef = {
-      kind,
-      name,
-      namespace,
-      ...{ previewpath, ref },
-    };
+    if (ref) {
+      entityRef = {
+        kind,
+        name,
+        namespace,
+        ...previewMetadata,
+      };
+    } else {
+      entityRef = {
+        kind,
+        name,
+        namespace,
+      };
+    }
   }
 
   const outlet = useOutlet();
