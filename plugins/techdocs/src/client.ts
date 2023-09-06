@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { CompoundEntityRef } from '@backstage/catalog-model';
 import { Config } from '@backstage/config';
 import {
   DiscoveryApi,
@@ -23,6 +22,7 @@ import {
 } from '@backstage/core-plugin-api';
 import { NotFoundError, ResponseError } from '@backstage/errors';
 import {
+  EntityRef,
   SyncResult,
   TechDocsApi,
   TechDocsEntityMetadata,
@@ -64,13 +64,15 @@ export class TechDocsClient implements TechDocsApi {
    *
    * @param entityId - Object containing entity data like name, namespace, etc.
    */
-  async getTechDocsMetadata(
-    entityId: CompoundEntityRef,
-  ): Promise<TechDocsMetadata> {
+  async getTechDocsMetadata(entityId: EntityRef): Promise<TechDocsMetadata> {
     const { kind, namespace, name } = entityId;
+    let optionalPath: string = '';
+    if ('previewpath' in entityId) {
+      optionalPath = `${entityId.previewpath}/${entityId.ref}/`;
+    }
 
     const apiOrigin = await this.getApiOrigin();
-    const requestUrl = `${apiOrigin}/metadata/techdocs/${namespace}/${kind}/${name}`;
+    const requestUrl = `${apiOrigin}/metadata/techdocs/${optionalPath}${namespace}/${kind}/${name}`;
     const request = await this.fetchApi.fetch(`${requestUrl}`);
     if (!request.ok) {
       throw await ResponseError.fromResponse(request);
@@ -88,12 +90,16 @@ export class TechDocsClient implements TechDocsApi {
    * @param entityId - Object containing entity data like name, namespace, etc.
    */
   async getEntityMetadata(
-    entityId: CompoundEntityRef,
+    entityId: EntityRef,
   ): Promise<TechDocsEntityMetadata> {
     const { kind, namespace, name } = entityId;
 
+    let optionalPath: string = '';
+    if ('previewpath' in entityId) {
+      optionalPath = `${entityId.previewpath}/${entityId.ref}/`;
+    }
     const apiOrigin = await this.getApiOrigin();
-    const requestUrl = `${apiOrigin}/metadata/entity/${namespace}/${kind}/${name}`;
+    const requestUrl = `${apiOrigin}/metadata/entity/${optionalPath}${namespace}/${kind}/${name}`;
 
     const request = await this.fetchApi.fetch(`${requestUrl}`);
     if (!request.ok) {
@@ -150,14 +156,17 @@ export class TechDocsStorageClient implements TechDocsStorageApi {
    * @returns HTML content of the docs page as string
    * @throws Throws error when the page is not found.
    */
-  async getEntityDocs(
-    entityId: CompoundEntityRef,
-    path: string,
-  ): Promise<string> {
+  async getEntityDocs(entityId: EntityRef, path: string): Promise<string> {
     const { kind, namespace, name } = entityId;
 
+    let optionalPath: string = '';
+    if ('previewpath' in entityId) {
+      optionalPath = `${entityId.previewpath}/${entityId.ref}/`;
+    }
+
     const storageUrl = await this.getStorageUrl();
-    const url = `${storageUrl}/${namespace}/${kind}/${name}/${path}`;
+
+    const url = `${storageUrl}/${optionalPath}${namespace}/${kind}/${name}/${path}`;
 
     const request = await this.fetchApi.fetch(
       `${url.endsWith('/') ? url : `${url}/`}index.html`,
@@ -194,10 +203,15 @@ export class TechDocsStorageClient implements TechDocsStorageApi {
    * @throws Throws error on error from sync endpoint in TechDocs Backend
    */
   async syncEntityDocs(
-    entityId: CompoundEntityRef,
+    entityId: EntityRef,
     logHandler: (line: string) => void = () => {},
   ): Promise<SyncResult> {
     const { kind, namespace, name } = entityId;
+
+    // TODO / Temp - don't sync on preview docs.
+    if ('previewpath' in entityId) {
+      return 'cached';
+    }
 
     const apiOrigin = await this.getApiOrigin();
     const url = `${apiOrigin}/sync/${namespace}/${kind}/${name}`;
@@ -247,7 +261,7 @@ export class TechDocsStorageClient implements TechDocsStorageApi {
 
   async getBaseUrl(
     oldBaseUrl: string,
-    entityId: CompoundEntityRef,
+    entityId: EntityRef,
     path: string,
   ): Promise<string> {
     const { kind, namespace, name } = entityId;

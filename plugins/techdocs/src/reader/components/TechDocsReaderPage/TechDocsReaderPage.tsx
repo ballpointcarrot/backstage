@@ -18,12 +18,11 @@ import React, { ReactNode, Children, ReactElement } from 'react';
 import { useOutlet } from 'react-router-dom';
 
 import { Page } from '@backstage/core-components';
-import { CompoundEntityRef } from '@backstage/catalog-model';
 import {
   TECHDOCS_ADDONS_WRAPPER_KEY,
   TECHDOCS_ADDONS_KEY,
   TechDocsReaderPageProvider,
-  PreviewMetadata,
+  EntityRef,
 } from '@backstage/plugin-techdocs-react';
 
 import { TechDocsReaderPageRenderFunction } from '../../../types';
@@ -148,7 +147,7 @@ export const TechDocsReaderLayout = (props: TechDocsReaderLayoutProps) => {
  * @public
  */
 export type TechDocsReaderPageProps = {
-  entityRef?: CompoundEntityRef | (CompoundEntityRef & PreviewMetadata);
+  entityRef?: EntityRef;
   children?: TechDocsReaderPageRenderFunction | ReactNode;
 };
 
@@ -162,7 +161,7 @@ export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
 
   const params = useRouteRefParams(previewDocsRouteRef);
 
-  let entityRef: CompoundEntityRef | (CompoundEntityRef & PreviewMetadata);
+  let entityRef: EntityRef;
   if (props.entityRef) {
     entityRef = props.entityRef;
   } else {

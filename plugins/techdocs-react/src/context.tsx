@@ -42,7 +42,7 @@ import {
 } from '@backstage/core-plugin-api';
 
 import { techdocsApiRef } from './api';
-import { TechDocsEntityMetadata, TechDocsMetadata } from './types';
+import { TechDocsEntityMetadata, TechDocsMetadata, EntityRef } from './types';
 
 import { toLowercaseEntityRefMaybe } from './helpers';
 
@@ -99,21 +99,12 @@ export type TechDocsReaderPageProviderRenderFunction = (
 ) => JSX.Element;
 
 /**
- * Context for a preview request from TechDocs (using the 'previewpath' value to correlate
- * whether or not a request is truly a preview)
- */
-export type PreviewMetadata = {
-  previewpath: string;
-  ref: string;
-};
-
-/**
  * Props for {@link TechDocsReaderPageProvider}
  *
  * @public
  */
 export type TechDocsReaderPageProviderProps = {
-  entityRef: CompoundEntityRef | (CompoundEntityRef & PreviewMetadata);
+  entityRef: EntityRef;
   children: TechDocsReaderPageProviderRenderFunction | ReactNode;
 };
 

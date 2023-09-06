@@ -18,7 +18,7 @@ import { NotFoundError } from '@backstage/errors';
 import { TestApiProvider } from '@backstage/test-utils';
 import { act, renderHook } from '@testing-library/react-hooks';
 import React from 'react';
-import { techdocsStorageApiRef } from '../../api';
+import { techdocsStorageApiRef } from '@backstage/plugin-techdocs-react';
 import {
   calculateDisplayState,
   reducer,
@@ -286,7 +286,11 @@ describe('useReaderState', () => {
 
       await act(async () => {
         const { result, waitForValueToChange } = await renderHook(
-          () => useReaderState('Component', 'default', 'backstage', '/example'),
+          () =>
+            useReaderState(
+              { kind: 'Component', namespace: 'default', name: 'backstage' },
+              '/example',
+            ),
           { wrapper: Wrapper },
         );
 
@@ -345,7 +349,11 @@ describe('useReaderState', () => {
 
       await act(async () => {
         const { result, waitForValueToChange } = await renderHook(
-          () => useReaderState('Component', 'default', 'backstage', '/example'),
+          () =>
+            useReaderState(
+              { kind: 'Component', namespace: 'default', name: 'backstage' },
+              '/example',
+            ),
           { wrapper: Wrapper },
         );
 
@@ -432,7 +440,11 @@ describe('useReaderState', () => {
 
       await act(async () => {
         const { result, waitForValueToChange } = await renderHook(
-          () => useReaderState('Component', 'default', 'backstage', '/example'),
+          () =>
+            useReaderState(
+              { kind: 'Component', namespace: 'default', name: 'backstage' },
+              '/example',
+            ),
           { wrapper: Wrapper },
         );
 
@@ -540,7 +552,10 @@ describe('useReaderState', () => {
       await act(async () => {
         const { result, waitForValueToChange, rerender } = await renderHook(
           ({ path }: { path: string }) =>
-            useReaderState('Component', 'default', 'backstage', path),
+            useReaderState(
+              { kind: 'Component', namespace: 'default', name: 'backstage' },
+              path,
+            ),
           { initialProps: { path: '/example' }, wrapper: Wrapper as any },
         );
 
@@ -634,7 +649,11 @@ describe('useReaderState', () => {
 
       await act(async () => {
         const { result, waitForValueToChange } = await renderHook(
-          () => useReaderState('Component', 'default', 'backstage', '/example'),
+          () =>
+            useReaderState(
+              { kind: 'Component', namespace: 'default', name: 'backstage' },
+              '/example',
+            ),
           { wrapper: Wrapper },
         );
 

@@ -15,7 +15,7 @@
  */
 
 import { Config } from '@backstage/config';
-import { CompoundEntityRef } from '@backstage/catalog-model';
+import { EntityRef } from './types';
 
 /**
  * Lower-case entity triplets by default, but allow override.
@@ -23,9 +23,9 @@ import { CompoundEntityRef } from '@backstage/catalog-model';
  * @public
  */
 export function toLowercaseEntityRefMaybe(
-  entityRef: CompoundEntityRef,
+  entityRef: EntityRef,
   config: Config,
-): CompoundEntityRef {
+): EntityRef {
   if (config.getOptionalBoolean('techdocs.legacyUseCaseSensitiveTripletPaths'))
     return entityRef;
 

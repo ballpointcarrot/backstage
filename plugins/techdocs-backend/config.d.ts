@@ -280,7 +280,7 @@ export interface Config {
        * If unset, the preview feature is not enabled, and no preview docs will
        * be served.
        */
-      basePath: string;
+      enabled: boolean;
     };
 
     /**

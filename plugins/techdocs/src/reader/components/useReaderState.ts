@@ -18,7 +18,10 @@ import { useApi } from '@backstage/core-plugin-api';
 import { useMemo, useReducer, useRef } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 import useAsyncRetry from 'react-use/lib/useAsyncRetry';
-import { techdocsStorageApiRef } from '@backstage/plugin-techdocs-react';
+import {
+  EntityRef,
+  techdocsStorageApiRef,
+} from '@backstage/plugin-techdocs-react';
 
 /**
  * @public
@@ -239,9 +242,7 @@ export type ReaderState = {
 };
 
 export function useReaderState(
-  kind: string,
-  namespace: string,
-  name: string,
+  entityRef: EntityRef,
   path: string,
 ): ReaderState {
   const [state, dispatch] = useReducer(reducer, {
@@ -259,7 +260,7 @@ export function useReaderState(
 
     try {
       const entityDocs = await techdocsStorageApi.getEntityDocs(
-        { kind, namespace, name },
+        { ...entityRef },
         path,
       );
 
@@ -272,7 +273,7 @@ export function useReaderState(
     }
 
     return undefined;
-  }, [techdocsStorageApi, kind, namespace, name, path]);
+  }, [techdocsStorageApi, path]);
 
   // create a ref that holds the latest content. This provides a useAsync hook
   // with the latest content without restarting the useAsync hook.
@@ -293,11 +294,7 @@ export function useReaderState(
 
     try {
       const result = await techdocsStorageApi.syncEntityDocs(
-        {
-          kind,
-          namespace,
-          name,
-        },
+        { ...entityRef },
         log => {
           dispatch({ type: 'buildLog', log });
         },
@@ -331,7 +328,7 @@ export function useReaderState(
       // Cancel the timer that sets the state "BUILDING"
       clearTimeout(buildingTimeout);
     }
-  }, [kind, name, namespace, techdocsStorageApi, dispatch, contentRef]);
+  }, [techdocsStorageApi, dispatch, contentRef]);
 
   const displayState = useMemo(
     () =>

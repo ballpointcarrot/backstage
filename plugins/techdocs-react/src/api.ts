@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { CompoundEntityRef } from '@backstage/catalog-model';
 import { createApiRef } from '@backstage/core-plugin-api';
-import { TechDocsEntityMetadata, TechDocsMetadata } from './types';
+import { TechDocsEntityMetadata, TechDocsMetadata, EntityRef } from './types';
 
 /**
  * API to talk to techdocs-backend.
@@ -25,10 +24,8 @@ import { TechDocsEntityMetadata, TechDocsMetadata } from './types';
  */
 export interface TechDocsApi {
   getApiOrigin(): Promise<string>;
-  getTechDocsMetadata(entityId: CompoundEntityRef): Promise<TechDocsMetadata>;
-  getEntityMetadata(
-    entityId: CompoundEntityRef,
-  ): Promise<TechDocsEntityMetadata>;
+  getTechDocsMetadata(entityId: EntityRef): Promise<TechDocsMetadata>;
+  getEntityMetadata(entityId: EntityRef): Promise<TechDocsEntityMetadata>;
 }
 
 /**
@@ -56,14 +53,14 @@ export interface TechDocsStorageApi {
   getApiOrigin(): Promise<string>;
   getStorageUrl(): Promise<string>;
   getBuilder(): Promise<string>;
-  getEntityDocs(entityId: CompoundEntityRef, path: string): Promise<string>;
+  getEntityDocs(entityId: EntityRef, path: string): Promise<string>;
   syncEntityDocs(
-    entityId: CompoundEntityRef,
+    entityId: EntityRef,
     logHandler?: (line: string) => void,
   ): Promise<SyncResult>;
   getBaseUrl(
     oldBaseUrl: string,
-    entityId: CompoundEntityRef,
+    entityId: EntityRef,
     path: string,
   ): Promise<string>;
 }

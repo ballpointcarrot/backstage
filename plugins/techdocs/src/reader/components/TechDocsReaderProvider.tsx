@@ -53,8 +53,7 @@ export const TechDocsReaderProvider = (props: TechDocsReaderProviderProps) => {
 
   const { '*': path = '' } = useParams();
   const { entityRef } = useTechDocsReaderPage();
-  const { kind, namespace, name } = entityRef;
-  const value = useReaderState(kind, namespace, name, path);
+  const value = useReaderState(entityRef, path);
 
   return (
     <TechDocsReaderContext.Provider value={value}>

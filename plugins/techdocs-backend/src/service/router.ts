@@ -151,17 +151,17 @@ export async function createRouter(
     cache,
   });
 
-  const previewPath = config.getOptionalString('techdocs.preview.basePath');
+  const previewPath = config.getOptionalBoolean('techdocs.preview.enabled');
   if (previewPath) {
     router.get(
-      `/metadata/techdocs/${previewPath}/:ref/:namespace/:kind/:name`,
+      `/metadata/techdocs/preview/:ref/:namespace/:kind/:name`,
       async (req, res) => {
         await techdocsMetadata(req, res);
       },
     );
 
     router.get(
-      `/metadata/entity/${previewPath}/:ref/:namespace/:kind/:name`,
+      `/metadata/entity/preview/:ref/:namespace/:kind/:name`,
       async (req, res) => {
         await entityMetadata(req, res);
       },

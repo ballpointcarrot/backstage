@@ -15,7 +15,7 @@
  */
 
 import { ComponentType } from 'react';
-import { Entity } from '@backstage/catalog-model';
+import { CompoundEntityRef, Entity } from '@backstage/catalog-model';
 
 /**
  * Metadata for TechDocs page
@@ -105,6 +105,19 @@ export const TechDocsAddonLocations = Object.freeze({
    */
   // Component: 'Component',
 } as const);
+
+/**
+ * Context for a preview request from TechDocs (using the 'previewpath' value to correlate
+ * whether or not a request is truly a preview)
+ */
+export type PreviewMetadata = {
+  previewpath: string;
+  ref: string;
+};
+
+export type EntityRef =
+  | CompoundEntityRef
+  | (CompoundEntityRef & PreviewMetadata);
 
 /**
  * Options for creating a TechDocs addon.
